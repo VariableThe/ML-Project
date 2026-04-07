@@ -92,3 +92,18 @@ plt.title('Final Model Confusion Matrix')
 plt.savefig('outputs/final_confusion_matrix.png')
 
 print("Final optimization complete. Results saved in 'outputs/'.")
+
+# --- ADDED: TEST AGAINST BLIND TEST CSV ---
+import os
+if os.path.exists('blind_test.csv'):
+    print("\n--- Testing Against blind_test.csv ---")
+    df_blind = pd.read_csv('blind_test.csv')
+    df_blind = extract_features(df_blind)
+    X_blind = df_blind.drop(columns=[c for c in (cols_to_drop + ['label']) if c in df_blind.columns])
+    X_blind = X_blind[X.columns]
+    X_blind_scaled = scaler.transform(X_blind)
+    blind_preds = best_rf.predict(X_blind_scaled)
+    
+    for i, pred in enumerate(blind_preds):
+        status = "!!! [ATTACK] !!!" if pred == 1 else "[BENIGN]"
+        print(f"Entry {i+1}: {status}")

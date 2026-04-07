@@ -16,8 +16,10 @@ def extract_features(df):
     df['is_bot'] = df['user_agent'].str.lower().apply(lambda x: 1 if any(bot in x for bot in bots) else 0)
     df['is_privileged_port'] = df['dst_port'].apply(lambda x: 1 if x < 1024 else 0)
     df['is_internal_traffic'] = df['is_internal_traffic'].fillna(False).astype(int)
-    le = LabelEncoder()
-    df['protocol_enc'] = le.fit_transform(df['protocol'].astype(str))
+    # e. Protocol Encoding (consistent across training and test)
+    protocols = ['ICMP', 'TCP', 'UDP']
+    df['protocol'] = df['protocol'].astype(str)
+    df['protocol_enc'] = df['protocol'].apply(lambda x: protocols.index(x) if x in protocols else -1)
     return df
 
 def train_and_predict(test_csv_path):
@@ -37,7 +39,7 @@ def train_and_predict(test_csv_path):
     X_train_res, y_train_res = smote.fit_resample(X_train_scaled, y_train)
 
     # Train the Winner (Random Forest)
-    model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42, class_weight={0: 1, 1: 10})
     model.fit(X_train_res, y_train_res)
 
     # Load and Process YOUR Custom CSV
