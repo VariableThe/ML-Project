@@ -8,18 +8,21 @@ Traditional security systems often miss novel "zero-day" attacks. This project l
 ### Key Features:
 - **Behavioral Feature Engineering**: Extracts signals from URLs (length, special characters) and User-Agent strings (bot detection).
 - **Imbalance Handling**: Uses SMOTE to handle the extreme 96:4 class distribution.
-- **Optimized Performance**: Achieved a **97.7% Cross-Validation F1-Score** using hyperparameter-tuned Random Forest.
+- **Dynamic Model Auditing**: Custom tools to evaluate model performance across different train/test splits and probability thresholds.
 - **Syllabus Alignment**: Maps core ML concepts (Classification, Ensembles, Evaluation) to a real-world cybersecurity use case.
 
 ---
 
 ## 📂 Project Structure
 ```text
-├── data/                   # Dataset (cybersecurity.csv)
+├── cybersecurity.csv       # Primary Dataset
 ├── src/                    # Implementation scripts
 │   ├── baseline_ids.py     # Initial models (Logistic Regression, KNN, SVM)
 │   ├── ids_enhanced.py     # Added Feature Engineering & SMOTE
 │   └── ids_final_optimized.py # Final GridSearchCV & Cross-Validation
+├── dynamic_evaluate.py     # CLI tool for testing custom splits and thresholds
+├── find_optimal_params.py  # Grid search tool to find best split/threshold combo
+├── generate_attack_graph.py # Visualizes attack distribution in 100-entry blocks
 ├── outputs/                # Visualizations & Metrics (Plots, JSON results)
 ├── presentation/           # Materials for project walkthrough
 ├── Project_Report.md       # Comprehensive technical documentation
@@ -41,27 +44,37 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install pandas numpy matplotlib seaborn scikit-learn xgboost imbalanced-learn
 ```
 
-### 2. Run the Pipeline
-To train the final optimized model and generate results:
-```bash
-python src/ids_final_optimized.py
-```
-
-### 3. Test with Custom Data
-You can use the `predict_custom.py` script to test the model against specific network logs:
-```bash
-python predict_custom.py
-```
+### 2. Run the Analysis Tools
+- **Find Optimal Split/Threshold**:
+  ```bash
+  python find_optimal_params.py
+  ```
+- **Dynamic Evaluation**:
+  ```bash
+  python dynamic_evaluate.py --split 0.3 --threshold 0.5
+  ```
+- **Generate Attack Distribution Graph**:
+  ```bash
+  python generate_attack_graph.py
+  ```
 
 ---
 
-## 📊 Results
-The final **Random Forest** model was selected after comparing multiple architectures.
-- **Accuracy**: 96.0%
-- **CV F1-Score**: 97.7%
-- **Key Indicators**: `url_special_chars`, `url_length`, and `is_bot` were the most significant features for identifying malicious intent.
+## 📊 Results & Findings
 
-Visualizations for Feature Importance and Confusion Matrices can be found in the `outputs/` directory.
+### Optimal Model Configuration
+Through automated grid search (`find_optimal_params.py`), the ideal configuration for this dataset was identified as:
+- **Test Split**: 30% (70/30 Train/Test)
+- **Classification Threshold**: 0.5
+- **Top F1-Score**: 0.5209
+
+### Attack Distribution
+The following graph (generated via `generate_attack_graph.py`) shows the distribution of actual attacks across the dataset in blocks of 100 entries ("classes"). This visualization helps identify temporal bursts of malicious activity.
+
+![Attacks per 100 entries](outputs/attacks_per_100_entries.png)
+
+### Key Indicators
+`url_special_chars`, `url_length`, and `is_bot` remain the most significant features for identifying malicious intent.
 
 ---
 
