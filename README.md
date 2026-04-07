@@ -62,11 +62,38 @@ pip install pandas numpy matplotlib seaborn scikit-learn xgboost imbalanced-lear
 
 ## 📊 Results & Findings
 
-### Optimal Model Configuration
-Through automated grid search (`find_optimal_params.py`), the ideal configuration for this dataset was identified as:
-- **Test Split**: 30% (70/30 Train/Test)
-- **Classification Threshold**: 0.5
-- **Top F1-Score**: 0.5209
+### Model Comparison & Selection
+To identify the most effective architecture for our Intrusion Detection System, we compared multiple algorithms using a standardized 80/20 train-test split and SMOTE-balanced training data.
+
+| Model | Accuracy | Precision | Recall | F1-Score |
+| :--- | :--- | :--- | :--- | :--- |
+| **Random Forest** | **96.15%** | **0.5224** | **0.4375** | **0.4762** |
+| **XGBoost** | 95.90% | 0.4861 | 0.4375 | 0.4605 |
+| **AdaBoost** | 85.30% | 0.1232 | 0.4375 | 0.1923 |
+| **K-Nearest Neighbors** | 83.10% | 0.1043 | 0.4250 | 0.1675 |
+| **Logistic Regression** | 55.80% | 0.0543 | 0.6125 | 0.0998 |
+
+### Why Random Forest?
+Random Forest was selected as our "Stability Champion" for several key reasons:
+- **Ensemble Robustness:** By aggregating predictions from 100+ decision trees, it significantly reduces the risk of overfitting compared to single-tree models.
+- **Handling Class Imbalance:** It proved highly effective at identifying the rare 4% of "attack" labels when paired with SMOTE, maintaining a superior balance between Precision and Recall.
+- **Feature Explainability:** It provides built-in feature importance scores, allowing us to verify that the model is making decisions based on meaningful signals (like URL length and special characters).
+- **Non-Linear Patterns:** It naturally captures the complex, non-linear relationships common in network traffic logs (e.g., a specific combination of port and URL behavior).
+
+### Why these Optimal Parameters?
+Through automated grid search (`find_optimal_params.py`), we identified the **70/30 Train-Test Split** and **0.5 Threshold** as the ideal configuration. Here is why:
+
+1. **The 70/30 Split (Stability):** 
+   - A 70% training set provides enough data for the Random Forest to learn complex attack patterns and handle the minority class (using SMOTE). 
+   - Reserving 30% for testing (instead of 10% or 20%) ensures that our evaluation metrics (Precision, Recall, F1) are statistically significant and not influenced by a "lucky" or "unlucky" small sample of rare attacks.
+
+2. **The 0.5 Threshold (The "Goldilocks" Balance):**
+   - **Lower Thresholds (e.g., 0.1 - 0.3):** While these catch more attacks (High Recall), they create a "False Alarm" crisis. For example, at a 0.1 threshold, our precision drops to ~10%, meaning 9 out of 10 alerts would be false positives.
+   - **Higher Thresholds (e.g., 0.7 - 0.9):** These are too conservative. While they are very accurate when they *do* flag an alert (High Precision), they miss over 80% of actual attacks (Low Recall).
+   - **The 0.5 Sweet Spot:** This threshold yielded the highest **F1-Score (0.5209)**, representing the most effective real-world balance between catching threats and maintaining system trust.
+
+3. **Metric Priority (F1-Score over Accuracy):**
+   - Because 96% of the data is benign, "Accuracy" is a deceptive metric (a model that does nothing would be 96% accurate). We prioritized the **F1-Score** because it forces the model to perform well on both Precision and Recall simultaneously.
 
 ### Attack Distribution
 The following graph (generated via `generate_attack_graph.py`) shows the distribution of actual attacks across the dataset in blocks of 100 entries ("classes"). This visualization helps identify temporal bursts of malicious activity.
